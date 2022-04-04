@@ -48,9 +48,11 @@ public class Main {
                 Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
                 Element els2 = els.first();
                 String name = document2.getElementsByClass("item__heading").text();
+                String sku = document2.getElementsByClass("item__sku").text().substring(13);
+
                 try{
 
-                System.out.println(counter + " " + name + " " + els2.text());
+                System.out.println(counter + " " + name + " " + els2.text() + " артикул каспи: " + sku);
                 Thread.sleep(time);} catch (NullPointerException e) {
                     System.out.println(counter + " " + name + " Нет актуальных предложений по данному товару");
                 }
