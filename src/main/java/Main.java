@@ -48,7 +48,7 @@ public class Main {
                 Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
                 Element els2 = els.first();
                 String name = document2.getElementsByClass("item__heading").text();
-                String sku = document2.getElementsByClass("item__sku").text().substring(13);
+                String sku = document2.getElementsByClass("item__sku").text().substring(12);
 
                 try{
 
