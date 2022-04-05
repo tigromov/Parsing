@@ -9,9 +9,11 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, NullPointerException {
@@ -25,7 +27,11 @@ public class Main {
         int li = 2;
 
         System.setProperty("webdriver.chrome.driver", "selenium\\chromedriver.exe");
-        WebDriver webDriver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+        options.setExperimentalOption("useAutomationExtension", false);
+        options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        WebDriver webDriver = new ChromeDriver(options);
+
         webDriver.get("https://kaspi.kz/shop/search/?text=music%20park&q=:allMerchants:Musicpark");
 
 
@@ -36,7 +42,7 @@ public class Main {
 
 
 
-        for (int i = 1; i < 23; i++) {
+        for (int i = 1; i < 3; i++) {
            webDriver.get("https://kaspi.kz/shop/search/?text=music%20park&q=:allMerchants:Musicpark&page=" + i +"");
            Thread.sleep(time + 3000);
 
@@ -57,15 +63,16 @@ public class Main {
                 String sku = document2.getElementsByClass("item__sku").text().substring(12);
                 String price = els2.text();
 
+
                 try{
 
                 System.out.println(counter + " " + name + " " + price + " артикул каспи: " + sku);
                 Thread.sleep(time);} catch (NullPointerException e) {
                     System.out.println(counter + " " + name + " Нет актуальных предложений по данному товару");
                 }
-                midSheet.createRow(counter).createCell(0).setCellValue(name);
-                midSheet.getRow(counter).createCell(1).setCellValue(price);
-                midSheet.getRow(counter).createCell(2).setCellValue(sku);
+                midSheet.createRow(counter-1).createCell(0).setCellValue(name);
+                midSheet.getRow(counter-1).createCell(1).setCellValue(price);
+                midSheet.getRow(counter-1).createCell(2).setCellValue(sku);
 
 
             }
