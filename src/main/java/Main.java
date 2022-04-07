@@ -5,16 +5,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, NullPointerException {
@@ -36,7 +36,7 @@ public class Main {
 
 //        webDriver.get("https://kaspi.kz/shop/search/?text=music%20park&q=:allMerchants:Musicpark");
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////регистрация////////////////////////////////////////////////////////////////////
 
         webDriver.get("https://kaspi.kz/merchantcabinet/");
         Thread.sleep(5000);
@@ -45,24 +45,69 @@ public class Main {
         Thread.sleep(5000);
         webDriver.findElement(By.id("main-nav-offers")).click();
         Thread.sleep(15000);
-        int productsListSize = 2;
+        /////////////////////////////////размер списка товар(откуда брать?)
+        int productsListSize = 1;
+        int prodCounter = 0;
+        /////////////////////////////////
         for (int i = 0; i < productsListSize; i++) {
             Document doc = Jsoup.parse(webDriver.getPageSource());
             //////добавление первых 10 sku в exel файл
             Elements skus = doc.getElementsByAttributeValue("title", "Артикул в системе продавца");
             int skusListLenght = skus.size();
-
+            ArrayList skuList = new ArrayList();
+            for (Element element: skus) {
+                skuList.add(element.text());
+            }
+            System.out.println(skuList);/////////////тест
+          ////////////добавление в файл наших артикулов
             for (int j = 0; j < skusListLenght; j++) {
+              midSheet.createRow(j+1).createCell(0).setCellValue((String) skuList.get(j));}
 
-               midSheet.createRow(j+1).createCell(0).setCellValue(sku.next());
+            Elements products = doc.getElementsByClass("offer-managment__product-cell-link");
+            for (Element prod:products) {
 
+
+                webDriver.get(prod.attr("href"));
+                Thread.sleep(3000);
+                /////закрытие окна выбора города////
+//                WebElement btnClose = webDriver.findElement(By.xpath("//*[@id=\"dialogService\"]/div/div[1]/div[2]/i"));
+//                btnClose.click(); Thread.sleep(1000);
+                //////////////////////////////////
+                ///создание названия и цены
+                Document document2 = Jsoup.parse(webDriver.getPageSource());
+                String name = document2.getElementsByClass("item__heading").text();
+                midSheet.getRow(prodCounter+1).createCell(1).setCellValue(name);
+                Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
+                Element els2 = els.first();
+                String priceLowest = els2.text();
+                midSheet.getRow(prodCounter+1).createCell(2).setCellValue(priceLowest);
+
+
+
+                prodCounter++;
             }
+            webDriver.get("https://kaspi.kz/merchantcabinet/#/offers");
+            Thread.sleep(10000);
+            webDriver.findElement(By.id("main-nav-offers")).click();
+            Thread.sleep(30000);
+            Actions move = new Actions(webDriver);
 
-            }
+            //"aria-label=\"Next page\""
+///html/body/div[5]/div[3]/div/div[4]/table/tbody/tr/td[4]/img
+            List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
+            System.out.println(btnNext);
+            move.moveToElement(btnNext.get(3));
+            Thread.sleep(1000);
+            JavascriptExecutor js = (JavascriptExecutor)webDriver;
+            js.executeScript("window.scrollBy(0,250)","");
+            btnNext.get(3).click();
+
+
+        }
 
 
 
-       // }
+
 
 
 
@@ -111,9 +156,9 @@ public class Main {
 //            }
 //        }
 //
-//        webDriver.close();
-//        midWb.write(fos);
-//        fos.close();
+        //webDriver.close();
+        midWb.write(fos);
+        fos.close();
 
 
 
