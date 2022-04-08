@@ -46,9 +46,12 @@ public class Main {
         webDriver.findElement(By.id("main-nav-offers")).click();
         Thread.sleep(15000);
         /////////////////////////////////размер списка товар(откуда брать?)
-        int productsListSize = 1;
+        int productsListSize = 24;
         int prodCounter = 0;
+        int prodCounterTotal = 0;
+        int clickCounter = 0;
         /////////////////////////////////
+
         for (int i = 0; i < productsListSize; i++) {
             Document doc = Jsoup.parse(webDriver.getPageSource());
             //////добавление первых 10 sku в exel файл
@@ -61,8 +64,8 @@ public class Main {
             System.out.println(skuList);/////////////тест
           ////////////добавление в файл наших артикулов
             for (int j = 0; j < skusListLenght; j++) {
-              midSheet.createRow(j+1).createCell(0).setCellValue((String) skuList.get(j));}
-
+              midSheet.createRow(prodCounterTotal+1+j).createCell(0).setCellValue((String) skuList.get(j));}
+            System.out.println(prodCounter);
             Elements products = doc.getElementsByClass("offer-managment__product-cell-link");
             for (Element prod:products) {
 
@@ -74,7 +77,7 @@ public class Main {
 //                btnClose.click(); Thread.sleep(1000);
                 //////////////////////////////////
                 ///создание названия и цены
-                Document document2 = Jsoup.parse(webDriver.getPageSource());
+                                Document document2 = Jsoup.parse(webDriver.getPageSource());
                 String name = document2.getElementsByClass("item__heading").text();
                 midSheet.getRow(prodCounter+1).createCell(1).setCellValue(name);
                 Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
@@ -85,22 +88,32 @@ public class Main {
 
 
                 prodCounter++;
+                System.out.println("номер продукта " + prodCounter);
             }
+            prodCounterTotal= prodCounterTotal+skusListLenght;
+            System.out.println("тотал " + prodCounterTotal);
+
+
             webDriver.get("https://kaspi.kz/merchantcabinet/#/offers");
             Thread.sleep(10000);
             webDriver.findElement(By.id("main-nav-offers")).click();
-            Thread.sleep(30000);
+            Thread.sleep(15000);
             Actions move = new Actions(webDriver);
+            int p = 0;
 
-            //"aria-label=\"Next page\""
-///html/body/div[5]/div[3]/div/div[4]/table/tbody/tr/td[4]/img
-            List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
-            System.out.println(btnNext);
+            while(p!= prodCounterTotal)
+            {List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
+
             move.moveToElement(btnNext.get(3));
             Thread.sleep(1000);
             JavascriptExecutor js = (JavascriptExecutor)webDriver;
-            js.executeScript("window.scrollBy(0,250)","");
+            js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+            Thread.sleep(5000);
             btnNext.get(3).click();
+            Thread.sleep(10000);
+            p=p+10;
+                System.out.println("p= " + p);}
+
 
 
         }
@@ -156,7 +169,7 @@ public class Main {
 //            }
 //        }
 //
-        //webDriver.close();
+        webDriver.close();
         midWb.write(fos);
         fos.close();
 
