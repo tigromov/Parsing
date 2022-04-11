@@ -6,18 +6,17 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Main {
-    public static void main(String[] args) throws IOException, InterruptedException, NullPointerException {
+    public static void main(String[] args) throws IOException, InterruptedException, NullPointerException{
 
         //////Создание промежуточного exel файла
         Workbook midWb = new XSSFWorkbook();
@@ -39,6 +38,8 @@ public class Main {
 ///////////////////////////////////регистрация////////////////////////////////////////////////////////////////////
 
         webDriver.get("https://kaspi.kz/merchantcabinet/");
+        webDriver.navigate().refresh();
+        Thread.sleep(2000);
         Thread.sleep(5000);
         webDriver.findElement(By.id("email")).sendKeys("zakaz@invask.kz");
         webDriver.findElement(By.id("password")).sendKeys("!ZakaZ2022" + Keys.ENTER);
@@ -58,16 +59,17 @@ public class Main {
             Elements skus = doc.getElementsByAttributeValue("title", "Артикул в системе продавца");
             int skusListLenght = skus.size();
             ArrayList skuList = new ArrayList();
-            for (Element element: skus) {
+            for (Element element : skus) {
                 skuList.add(element.text());
             }
             System.out.println(skuList);/////////////тест
-          ////////////добавление в файл наших артикулов
+            ////////////добавление в файл наших артикулов
             for (int j = 0; j < skusListLenght; j++) {
-              midSheet.createRow(prodCounterTotal+1+j).createCell(0).setCellValue((String) skuList.get(j));}
+                midSheet.createRow(prodCounterTotal + 1 + j).createCell(0).setCellValue((String) skuList.get(j));
+            }
             System.out.println(prodCounter);
             Elements products = doc.getElementsByClass("offer-managment__product-cell-link");
-            for (Element prod:products) {
+            for (Element prod : products) {
 
 
                 webDriver.get(prod.attr("href"));
@@ -77,48 +79,65 @@ public class Main {
 //                btnClose.click(); Thread.sleep(1000);
                 //////////////////////////////////
                 ///создание названия и цены
-                                Document document2 = Jsoup.parse(webDriver.getPageSource());
+                Document document2 = Jsoup.parse(webDriver.getPageSource());
                 String name = document2.getElementsByClass("item__heading").text();
-                midSheet.getRow(prodCounter+1).createCell(1).setCellValue(name);
+                midSheet.getRow(prodCounter + 1).createCell(1).setCellValue(name);
                 Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
                 Element els2 = els.first();
                 String priceLowest = els2.text();
-                midSheet.getRow(prodCounter+1).createCell(2).setCellValue(priceLowest);
-
+                midSheet.getRow(prodCounter + 1).createCell(2).setCellValue(priceLowest);
 
 
                 prodCounter++;
-                System.out.println("номер продукта " + prodCounter);
+                System.out.println(prodCounter + " " + name);
             }
-            prodCounterTotal= prodCounterTotal+skusListLenght;
+            prodCounterTotal = prodCounterTotal + skusListLenght;
             System.out.println("тотал " + prodCounterTotal);
 
 
-            webDriver.get("https://kaspi.kz/merchantcabinet/#/offers");
-            Thread.sleep(10000);
-            webDriver.findElement(By.id("main-nav-offers")).click();
-            Thread.sleep(15000);
-            Actions move = new Actions(webDriver);
-            int p = 0;
+                try{
+                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+                    Thread.sleep(15000);
+                    webDriver.findElement(By.id("main-nav-offers")).click();
+                    Thread.sleep(5000);
 
-            while(p!= prodCounterTotal)
-            {List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
-
-            move.moveToElement(btnNext.get(3));
-            Thread.sleep(1000);
-            JavascriptExecutor js = (JavascriptExecutor)webDriver;
-            js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
-            Thread.sleep(5000);
-            btnNext.get(3).click();
-            Thread.sleep(10000);
-            p=p+10;
-                System.out.println("p= " + p);}
+                }catch (NoSuchElementException elementException){
+                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+                    webDriver.navigate().refresh();
+                    Thread.sleep(10000);
+                    webDriver.findElement(By.id("main-nav-offers")).click();
+                    Thread.sleep(10000);
+                }finally {
+                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+                    webDriver.findElement(By.id("main-nav-offers")).click();
+                    Thread.sleep(15000);
+                }
 
 
 
-        }
 
 
+
+
+
+                Actions move = new Actions(webDriver);
+                int p = 0;
+
+                while (p != prodCounterTotal) {
+                    List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
+
+                    move.moveToElement(btnNext.get(3));
+                    Thread.sleep(1000);
+                    JavascriptExecutor js = (JavascriptExecutor) webDriver;
+                    js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+                    Thread.sleep(1000);
+                    js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+                    Thread.sleep(3000);
+                    btnNext.get(3).click();
+                    Thread.sleep(8000);
+                    p = p + 10;
+                    System.out.println("p= " + p);
+                }
 
 
 
@@ -169,15 +188,12 @@ public class Main {
 //            }
 //        }
 //
-        webDriver.close();
-        midWb.write(fos);
-        fos.close();
 
+                midWb.write(fos);
 
+            }
+            webDriver.close();
+            fos.close();
 
-
-
-
-
+        }
     }
-}
