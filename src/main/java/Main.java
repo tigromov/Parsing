@@ -1,5 +1,5 @@
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,13 +15,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+
+
 public class Main {
     public static void main(String[] args) throws IOException, InterruptedException, NullPointerException{
 
         //////Создание промежуточного exel файла
         Workbook midWb = new XSSFWorkbook();
         Sheet midSheet = midWb.createSheet();
-        FileOutputStream fos = new FileOutputStream("C:/Rest/ParsingMid2.xls");//изменить имя файла
+        FileOutputStream fos = new FileOutputStream("C:/Rest/ParsingMid2.xls" );//изменить имя файла
+//        CellStyle style = midWb.createCellStyle();
+//        style.setFillBackgroundColor(IndexedColors.RED.getIndex());
+//        style.setFillPattern(FillPatternType.BIG_SPOTS);
 //        //////
 //        int time = 1000;
 //        int counter = 0;
@@ -37,20 +42,28 @@ public class Main {
 
 ///////////////////////////////////регистрация////////////////////////////////////////////////////////////////////
 
-        webDriver.get("https://kaspi.kz/merchantcabinet/");
-        webDriver.navigate().refresh();
-        Thread.sleep(2000);
+        try {
+            webDriver.get("https://kaspi.kz/merchantcabinet/");
+        }catch (NoSuchElementException exception){
+            webDriver.navigate().refresh();
+            Thread.sleep(2000);
+
+        }
+
         Thread.sleep(5000);
         webDriver.findElement(By.id("email")).sendKeys("zakaz@invask.kz");
         webDriver.findElement(By.id("password")).sendKeys("!ZakaZ2022" + Keys.ENTER);
         Thread.sleep(5000);
-        webDriver.findElement(By.id("main-nav-offers")).click();
-        Thread.sleep(15000);
+        try{webDriver.findElement(By.id("main-nav-offers")).click();}
+        catch (NoSuchElementException elementException){
+            webDriver.navigate().refresh();
+        }
+        Thread.sleep(18000);
         /////////////////////////////////размер списка товар(откуда брать?)
-        int productsListSize = 24;
+        int productsListSize = 1;
         int prodCounter = 0;
         int prodCounterTotal = 0;
-        int clickCounter = 0;
+
         /////////////////////////////////
 
         for (int i = 0; i < productsListSize; i++) {
@@ -73,7 +86,16 @@ public class Main {
 
 
                 webDriver.get(prod.attr("href"));
-                Thread.sleep(3000);
+                Thread.sleep(5000);
+                try{
+                    Document documentTest = Jsoup.parse(webDriver.getPageSource());
+                    Elements priceTest = documentTest.getElementsByClass("sellers-table__price-cell-text");
+                    String priceTest2 = priceTest.first().text();
+                    System.out.println(priceTest2);
+                }catch (NullPointerException exception){
+                    System.out.println("test");
+                    Thread.sleep(20000);
+                }
                 /////закрытие окна выбора города////
 //                WebElement btnClose = webDriver.findElement(By.xpath("//*[@id=\"dialogService\"]/div/div[1]/div[2]/i"));
 //                btnClose.click(); Thread.sleep(1000);
@@ -84,34 +106,84 @@ public class Main {
                 midSheet.getRow(prodCounter + 1).createCell(1).setCellValue(name);
                 Elements els = document2.getElementsByClass("sellers-table__price-cell-text");
                 Element els2 = els.first();
-                String priceLowest = els2.text();
+
+                ////////////////первая цена////////////
+                String priceLowest = els2.text().replaceAll("₸", "");
+                int priceLowestnumber = Integer.parseInt(priceLowest.replace(" ",""));
                 midSheet.getRow(prodCounter + 1).createCell(2).setCellValue(priceLowest);
+                ///////////имя продавца///////////
+                Elements cellersKaspi = document2.getElementsByClass("sellers-table__cell");
+                String firstSeller = cellersKaspi.first().text();
+
+                try{
+                    int index = firstSeller.indexOf("(");
+
+                String firstSellerout = firstSeller.substring(0,index);
+                firstSellerout = firstSellerout.replace(" ","");
+                midSheet.getRow(prodCounter+1).createCell(3).setCellValue(firstSellerout);
+//                if (!firstSellerout.equals("MusicPark")){
+//                    midSheet.getRow(prodCounter+1).getCell(3).setCellStyle(style);
+//                }
+                }
+                catch (StringIndexOutOfBoundsException exception){
+                    firstSeller = firstSeller.replace(" ","");
+                    midSheet.getRow(prodCounter+1).createCell(3).setCellValue(firstSeller);
+//                    if (!firstSeller.equals("MusicPark")){
+//                        midSheet.getRow(prodCounter+1).getCell(3).setCellStyle(style);}
+                }
+
+                ////////////////вторая цена////////////
+                List<WebElement>prices = webDriver.findElements(By.className("sellers-table__price-cell-text"));
+                String secondPrice;
+                int secondPriceNumber;
+                try{secondPrice = prices.get(2).getText();
+                    secondPrice = secondPrice.replaceAll("₸","");
+                    secondPriceNumber = Integer.parseInt(secondPrice.replace(" ",""));
+                    midSheet.getRow(prodCounter+1).createCell(4).setCellValue(secondPriceNumber);
+
+                }catch (IndexOutOfBoundsException e){
+                    secondPriceNumber = 0;
+                    midSheet.getRow(prodCounter+1).createCell(4).setCellValue(secondPriceNumber);
+                }
+
 
 
                 prodCounter++;
-                System.out.println(prodCounter + " " + name);
+                System.out.println(prodCounter + " " + name + " " + priceLowestnumber + " " + firstSeller + " " +secondPriceNumber);
             }
             prodCounterTotal = prodCounterTotal + skusListLenght;
             System.out.println("тотал " + prodCounterTotal);
 
 
-                try{
+
+            try{ try {
+
+
+
                     webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
                     Thread.sleep(15000);
                     webDriver.findElement(By.id("main-nav-offers")).click();
                     Thread.sleep(5000);
 
                 }catch (NoSuchElementException elementException){
-                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+                    //webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
                     webDriver.navigate().refresh();
                     Thread.sleep(10000);
                     webDriver.findElement(By.id("main-nav-offers")).click();
                     Thread.sleep(10000);
-                }finally {
-                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
-                    webDriver.findElement(By.id("main-nav-offers")).click();
-                    Thread.sleep(15000);
-                }
+                }}catch (NoSuchElementException exception){
+                webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+               // webDriver.navigate().refresh();
+                Thread.sleep(10000);
+                webDriver.findElement(By.id("main-nav-offers")).click();
+                Thread.sleep(10000);
+
+            }
+//                finally {
+//                    webDriver.get("https://kaspi.kz/merchantcabinet/#/orders/tabs");
+//                    webDriver.findElement(By.id("main-nav-offers")).click();
+//                    Thread.sleep(15000);
+//                }
 
 
 
@@ -123,7 +195,7 @@ public class Main {
                 Actions move = new Actions(webDriver);
                 int p = 0;
 
-                while (p != prodCounterTotal) {
+                while (p != prodCounterTotal & p < prodCounterTotal) {
                     List<WebElement> btnNext = webDriver.findElements(By.className("gwt-Image"));
 
                     move.moveToElement(btnNext.get(3));
@@ -132,8 +204,15 @@ public class Main {
                     js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
                     Thread.sleep(1000);
                     js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
-                    Thread.sleep(3000);
-                    btnNext.get(3).click();
+                    Thread.sleep(1000);
+                    try{btnNext.get(3).click();}
+                    catch (ElementNotInteractableException exception){
+                        Thread.sleep(10000);
+                        js.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+                        Thread.sleep(3000);
+                        btnNext.get(3).click();
+
+                    }
                     Thread.sleep(8000);
                     p = p + 10;
                     System.out.println("p= " + p);
